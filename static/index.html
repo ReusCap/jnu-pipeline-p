@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>영화 리뷰 감정 분석기</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">🎬 영화 리뷰 감정 분석기</h1>
+        
+        <textarea id="reviewText" 
+                  class="w-full p-3 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" 
+                  rows="4" 
+                  placeholder="영화 리뷰를 입력하세요... (예: 너무 재밌고 감동적이었어요!)"></textarea>
+        
+        <button onclick="analyzeReview()" 
+                class="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600 transition duration-200">
+            분석하기
+        </button>
+        
+        <div id="resultBox" class="mt-6 hidden p-4 rounded text-center font-semibold transition-all"></div>
+    </div>
+
+    <script>
+        async function analyzeReview() {
+            const text = document.getElementById('reviewText').value;
+            if (!text.trim()) {
+                alert("리뷰를 입력해주세요!");
+                return;
+            }
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text })
+                });
+                
+                const data = await response.json();
+                const resultBox = document.getElementById('resultBox');
+                
+                // 기존 스타일 초기화
+                resultBox.className = 'mt-6 p-4 rounded text-center font-semibold transition-all block';
+                
+                // 결과에 따른 색상 적용
+                if (data.label === '긍정') {
+                    resultBox.classList.add('bg-green-100', 'text-green-800');
+                } else if (data.label === '부정') {
+                    resultBox.classList.add('bg-red-100', 'text-red-800');
+                } else {
+                    resultBox.classList.add('bg-gray-100', 'text-gray-800');
+                }
+                
+                resultBox.innerHTML = `분석 결과: <strong>${data.label}</strong> <br> <span class="text-sm font-normal">(확신도: ${data.confidence})</span>`;
+            } catch (error) {
+                console.error("Error:", error);
+                alert("서버 통신 중 오류가 발생했습니다.");
+            }
+        }
+    </script>
+</body>
+</html>
