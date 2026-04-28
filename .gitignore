@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# 가상환경
+venv/
+env/
+.venv/
+.env
+
+# 테스트 / 캐시
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# 빌드 산출물
+build/
+dist/
+*.egg-info/
+
+# 모델 / 데이터 (기말에 추가될 산출물 — 깃에 올리지 않음)
+models/*.pkl
+models/*.joblib
+data/*.txt
+data/*.csv
+mlruns/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
