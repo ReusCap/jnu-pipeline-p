@@ -5,22 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>영화 리뷰 감정 분석기</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" as="style" crossorigin
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+    <style>
+        html, body {
+            font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 h-screen flex items-center justify-center">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">🎬 영화 리뷰 감정 분석기</h1>
-        
-        <textarea id="reviewText" 
-                  class="w-full p-3 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" 
-                  rows="4" 
-                  placeholder="영화 리뷰를 입력하세요... (예: 너무 재밌고 감동적이었어요!)"></textarea>
-        
-        <button onclick="analyzeReview()" 
-                class="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600 transition duration-200">
+<body class="bg-[#F2F4F6] min-h-screen flex items-center justify-center px-4">
+    <div class="bg-white p-8 rounded-2xl w-full max-w-md shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-[#E5E8EB]">
+        <h1 class="text-[22px] font-bold mb-2 text-[#191F28] tracking-tight">영화 리뷰 감정 분석기</h1>
+        <p class="text-sm text-[#8B95A1] mb-6">리뷰를 입력하면 긍정·부정을 분석해 드려요.</p>
+
+        <textarea id="reviewText"
+                  class="w-full p-4 bg-[#F2F4F6] border border-transparent rounded-xl mb-3 text-[15px] text-[#191F28] placeholder:text-[#B0B8C1] focus:outline-none focus:bg-white focus:border-[#3182F6] resize-none transition-colors"
+                  rows="4"
+                  placeholder="예: 너무 재밌고 감동적이었어요!"></textarea>
+
+        <button onclick="analyzeReview()"
+                class="w-full bg-[#3182F6] text-white font-semibold text-[15px] py-3.5 rounded-xl hover:bg-[#1B64DA] active:bg-[#1B64DA] transition-colors">
             분석하기
         </button>
-        
-        <div id="resultBox" class="mt-6 hidden p-4 rounded text-center font-semibold transition-all"></div>
+
+        <div id="resultBox" class="mt-4 hidden p-4 rounded-xl text-[15px]"></div>
     </div>
 
     <script>
@@ -37,23 +46,24 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ text: text })
                 });
-                
+
                 const data = await response.json();
                 const resultBox = document.getElementById('resultBox');
-                
-                // 기존 스타일 초기화
-                resultBox.className = 'mt-6 p-4 rounded text-center font-semibold transition-all block';
-                
-                // 결과에 따른 색상 적용
+
+                resultBox.className = 'mt-4 p-4 rounded-xl text-[15px] block';
+
                 if (data.label === '긍정') {
-                    resultBox.classList.add('bg-green-100', 'text-green-800');
+                    resultBox.classList.add('bg-[#E8F3FF]', 'text-[#1B64DA]');
                 } else if (data.label === '부정') {
-                    resultBox.classList.add('bg-red-100', 'text-red-800');
+                    resultBox.classList.add('bg-[#FFF0F0]', 'text-[#E5484D]');
                 } else {
-                    resultBox.classList.add('bg-gray-100', 'text-gray-800');
+                    resultBox.classList.add('bg-[#F2F4F6]', 'text-[#4E5968]');
                 }
-                
-                resultBox.innerHTML = `분석 결과: <strong>${data.label}</strong> <br> <span class="text-sm font-normal">(확신도: ${data.confidence})</span>`;
+
+                resultBox.innerHTML = `
+                    <div class="font-semibold">분석 결과: ${data.label}</div>
+                    <div class="text-[13px] text-[#8B95A1] mt-1">확신도 ${data.confidence}</div>
+                `;
             } catch (error) {
                 console.error("Error:", error);
                 alert("서버 통신 중 오류가 발생했습니다.");
