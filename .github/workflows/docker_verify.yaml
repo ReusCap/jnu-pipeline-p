@@ -1,0 +1,31 @@
+name: Docker Verify
+
+on:
+  pull_request:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  docker-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t movie-sentiment:ci .
+
+      - name: Run container
+        run: |
+          docker run -d --name movie_sentiment_ci \
+            -p 8000:8000 \
+            movie-sentiment:ci
+
+      - name: Check container is running
+        run: |
+          sleep 3
+          docker ps | grep movie_sentiment_ci
+
+      - name: Cleanup
+        if: always()
+        run: docker rm -f movie_sentiment_ci || true
