@@ -15,3 +15,19 @@ def test_predict_negative():
 def test_predict_neutral():
     result = predict_sentiment("그냥 평범한 영화네요.")
     assert result["label"] == "중립"
+
+def test_predict_negation_prefix():
+    result = predict_sentiment("이 영화 정말 안 좋다")
+    assert result["label"] == "부정"
+
+def test_predict_negation_suffix():
+    result = predict_sentiment("재밌지 않다")
+    assert result["label"] == "부정"
+
+def test_predict_negation_postfix_token():
+    result = predict_sentiment("이거 추천 안 합니다")
+    assert result["label"] == "부정"
+
+def test_predict_combined_negation():
+    result = predict_sentiment("별로 좋지 않다")
+    assert result["label"] == "부정"
