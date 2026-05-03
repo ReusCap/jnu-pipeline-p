@@ -1,0 +1,21 @@
+# .coderabbit.yaml
+# https://docs.coderabbit.ai/guides/configure-coderabbit
+
+language: "ko-KR"
+tone_instructions: "한국어로 간결하게 리뷰. 사소한 스타일보다 버그/보안/가독성 우선."
+
+early_access: false
+
+reviews:
+  profile: "chill"               # chill: 트집 줄임 / assertive: 더 엄격
+  request_changes_workflow: false
+  high_level_summary: true       # PR 상단에 변경 요약
+  poem: false                    # PR 시 자동 생성되는 시(poem) 끄기
+  review_status: true
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true                # PR 열리면 자동 리뷰
+    drafts: false                # Draft PR은 리뷰 제외
+
+chat:
+  auto_reply: true               # PR 코멘트에서 @coderabbitai 멘션에 자동 응답
