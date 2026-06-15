@@ -11,6 +11,9 @@ from pydantic import BaseModel
 from app.model import predict_sentiment
 from app.issue import create_github_issue
 
+from app.model import predict_sentiment, predict_sentiment_ml
+from app.config import MODEL_MODE
+
 # 1) 로그 포맷: 시간 | 레벨 | 파일:라인(함수) | 메시지
 logging.basicConfig(
     level=logging.INFO,
@@ -45,7 +48,10 @@ async def predict(request: ReviewRequest):
         if text == "crash":
             raise RuntimeError("의도적 장애 추가")
 
-        result = predict_sentiment(text)
+        if MODEL_MODE == "ml":
+            result = predict_sentiment_ml(text)
+        else:
+            result = predict_sentiment(text)
 
         # (B) 정상 결과도 짧게 기록
         logger.info(
