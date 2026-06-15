@@ -28,6 +28,7 @@ models/*.pkl
 models/*.joblib
 data/*.txt
 data/*.csv
+ml/artifacts/
 mlruns/
 
 # IDE / OS

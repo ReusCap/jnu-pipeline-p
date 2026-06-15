@@ -19,3 +19,6 @@ EXPOSE 8000
 
 # 6. 서버 실행 명령어
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# ml 모드 컨테이너가 모델 파일을 찾게하기
+COPY ./ml ./ml
