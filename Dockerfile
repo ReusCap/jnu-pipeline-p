@@ -21,4 +21,12 @@ EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 # ml 모드 컨테이너가 모델 파일을 찾게하기
+COPY ./app ./app
+COPY ./static ./static
 COPY ./ml ./ml
+
+# 빌드 시 모델 학습 (아티팩트는 git에 올리지 않으므로 여기서 생성)
+RUN python ml/train.py
+
+EXPOSE 8000
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
