@@ -28,7 +28,7 @@ jobs:
         pip install pytest
         
     - name: 모델 학습 (아티팩트 생성)
-      run: python ml/train.py
+      run: python -m ml.train
 
     - name: pytest 실행 (단위 테스트)
       run: |
