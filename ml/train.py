@@ -7,6 +7,8 @@ import pandas as pd
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score
 
 from app.config import (
@@ -26,7 +28,6 @@ MODEL_PATH = os.path.join(ARTIFACT_DIR, MODEL_NAME)
 
 os.makedirs(ARTIFACT_DIR, exist_ok=True)
 
-# 실험 세팅: 로컬 sqlite 또는 외부 서버(ngrok). 환경변수로 제어.
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 mlflow.set_registry_uri(MLFLOW_TRACKING_URI)
 mlflow.set_experiment("movie-sentiment-local")
@@ -36,34 +37,33 @@ test_df = pd.read_csv(TEST_DATA_PATH)
 X_train, y_train = train_df["text"], train_df["label"]
 X_test, y_test = test_df["text"], test_df["label"]
 
-with mlflow.start_run():
-    mlflow.log_param("train_data_path", TRAIN_DATA_PATH)
-    mlflow.log_param("test_data_path", TEST_DATA_PATH)
-    mlflow.log_param("train_row_count", len(train_df))
-    mlflow.log_param("test_row_count", len(test_df))
+models = {
+    "LogisticRegression": LogisticRegression(max_iter=200),
+    "NaiveBayes": MultinomialNB(),
+    "DecisionTree": DecisionTreeClassifier(random_state=42),
+}
 
-    pipeline = Pipeline([
-        ("vectorizer", CountVectorizer()),
-        ("classifier", LogisticRegression(max_iter=200)),
-    ])
-    pipeline.fit(X_train, y_train)
+for model_name, model in models.items():
+    with mlflow.start_run(run_name=model_name):
+        mlflow.log_param("model_name", model_name)
+        mlflow.log_param("train_row_count", len(train_df))
+        mlflow.log_param("test_row_count", len(test_df))
 
-    train_acc = accuracy_score(y_train, pipeline.predict(X_train))
-    test_acc = accuracy_score(y_test, pipeline.predict(X_test))
-    mlflow.log_metric("train_accuracy", train_acc)
-    mlflow.log_metric("test_accuracy", test_acc)
+        pipeline = Pipeline([
+            ("vectorizer", CountVectorizer()),
+            ("classifier", model),
+        ])
+        pipeline.fit(X_train, y_train)
 
-    joblib.dump(pipeline, MODEL_PATH)
+        train_acc = accuracy_score(y_train, pipeline.predict(X_train))
+        test_acc = accuracy_score(y_test, pipeline.predict(X_test))
+        mlflow.log_metric("train_accuracy", train_acc)
+        mlflow.log_metric("test_accuracy", test_acc)
 
-    mlflow.log_artifact(TRAIN_DATA_PATH)
-    mlflow.log_artifact(TEST_DATA_PATH)
-    mlflow.log_artifact(MODEL_PATH)
+        joblib.dump(pipeline, MODEL_PATH)  # 폴백용 로컬 파일(마지막 run 기준)
+        mlflow.log_artifact(MODEL_PATH)
+        mlflow.sklearn.log_model(
+            pipeline, name="model", registered_model_name="movie-sentiment-model"
+        )
 
-    # MLflow 모델 형식으로 등록
-    mlflow.sklearn.log_model(
-        pipeline, name="model", registered_model_name="movie-sentiment-model"
-    )
-
-    print(f"Model saved to: {MODEL_PATH}")
-    print(f"train_accuracy: {train_acc:.4f}")
-    print(f"test_accuracy: {test_acc:.4f}")
+        print(f"[{model_name}] train_acc={train_acc:.4f} test_acc={test_acc:.4f}")
