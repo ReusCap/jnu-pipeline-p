@@ -1,0 +1,46 @@
+name: Train ML Model
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'ml/**'
+      - 'app/**'
+      - 'tests/**'
+      - 'requirements.txt'
+      - '.github/workflows/train.yml'
+  workflow_dispatch:   # GitHub 화면에서 수동 실행 가능
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 코드 가져오기
+        uses: actions/checkout@v4
+
+      - name: 파이썬 설치
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: 라이브러리 설치
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # 학습 전: 코드(규칙 로직)만 검증 → 깨졌으면 여기서 멈춰 학습 시간 낭비 방지
+      - name: 코드 테스트 (학습 전)
+        run: python -m pytest tests/test_rules.py -q
+
+      - name: 모델 학습 실행
+        run: python -m ml.train
+
+      # 학습 후: 방금 만든 아티팩트(joblib) 검증
+      - name: 모델 테스트 (학습 후)
+        run: python -m pytest tests/test_model.py -q
+
+      - name: 학습 결과 업로드
+        uses: actions/upload-artifact@v4
+        with:
+          name: trained-model-files
+          path: ml/artifacts/
