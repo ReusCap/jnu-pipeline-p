@@ -30,7 +30,7 @@ os.makedirs(ARTIFACT_DIR, exist_ok=True)
 
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 mlflow.set_registry_uri(MLFLOW_TRACKING_URI)
-mlflow.set_experiment("movie-sentiment-local")
+mlflow.set_experiment("movie-sentiment-server")
 
 train_df = pd.read_csv(TRAIN_DATA_PATH)
 test_df = pd.read_csv(TEST_DATA_PATH)
