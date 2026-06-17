@@ -13,6 +13,9 @@ from app.issue import create_github_issue
 
 from app.model import predict_sentiment, predict_sentiment_ml
 from app.config import MODEL_MODE
+from app.model_loader import get_model_info
+
+
 
 # 1) 로그 포맷: 시간 | 레벨 | 파일:라인(함수) | 메시지
 logging.basicConfig(
@@ -50,6 +53,7 @@ async def predict(request: ReviewRequest):
 
         if MODEL_MODE == "ml":
             result = predict_sentiment_ml(text)
+            result["model_info"] = get_model_info()
         else:
             result = predict_sentiment(text)
 
