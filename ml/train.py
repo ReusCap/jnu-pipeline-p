@@ -45,7 +45,9 @@ models = {
 
 for model_name, model in models.items():
     with mlflow.start_run(run_name=model_name):
-        mlflow.log_param("model_name", model_name)
+        # 모델 정보 조회(get_model_info)에서 읽는 키. 하드코딩이 아니라 루프 변수로 기록
+        mlflow.log_param("model_type", model_name)
+        mlflow.log_param("vectorizer", "CountVectorizer")
         mlflow.log_param("train_row_count", len(train_df))
         mlflow.log_param("test_row_count", len(test_df))
 
