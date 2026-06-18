@@ -8,6 +8,7 @@ from mlflow.tracking import MlflowClient
 from app.config import MLFLOW_TRACKING_URI, MODEL_URI, LOCAL_MODEL_PATH
 
 _model = None
+_model_info = None
 
 
 def load_model():
@@ -26,6 +27,7 @@ def load_model():
         _model = joblib.load(LOCAL_MODEL_PATH)
 
     return _model
+
 
 def get_model_info():
     """현재 서빙 중인 모델(@champion)의 run_id/model_type/test_accuracy를 반환.
