@@ -60,10 +60,23 @@
                     resultBox.classList.add('bg-[#F2F4F6]', 'text-[#4E5968]');
                 }
 
-                resultBox.innerHTML = `
+                let html = `
                     <div class="font-semibold">분석 결과: ${data.label}</div>
                     <div class="text-[13px] text-[#8B95A1] mt-1">확신도 ${data.confidence}</div>
                 `;
+
+                if (data.model_info) {
+                    const mi = data.model_info;
+                    html += `
+                        <div class="mt-3 pt-3 border-t border-[#E5E8EB] text-[12px] text-[#8B95A1] space-y-0.5">
+                            <div>모델: ${mi.model_type ?? '—'}</div>
+                            <div>Test Acc: ${mi.test_accuracy ?? '—'}</div>
+                            <div>Run ID: ${mi.run_id ?? '—'}</div>
+                        </div>
+                    `;
+                }
+
+                resultBox.innerHTML = html;
             } catch (error) {
                 console.error("Error:", error);
                 alert("서버 통신 중 오류가 발생했습니다.");
