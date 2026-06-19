@@ -22,3 +22,13 @@ DATA_DIR_NAME = "data"
 
 # (폴백용) 로컬 모델 경로 — ml/artifacts/sentiment_model.joblib
 LOCAL_MODEL_PATH = os.path.join("ml", ARTIFACT_DIR_NAME, MODEL_NAME)
+
+# --- drift / 재학습 이슈 임계값 ---
+LOW_CONFIDENCE_THRESHOLD = float(os.getenv("LOW_CONFIDENCE_THRESHOLD", "0.65"))
+LOW_CONFIDENCE_LIMIT = int(os.getenv("LOW_CONFIDENCE_LIMIT", "5"))
+
+# --- 카나리 배포 설정 ---
+CANARY_ENABLED = os.getenv("CANARY_ENABLED", "true").lower() == "true"
+CANARY_RATIO = float(os.getenv("CANARY_RATIO", "0.5"))  # challenger 비율(수업용 0.5, 실제는 0.1 정도)
+CHAMPION_MODEL_URI = os.getenv("CHAMPION_MODEL_URI", "models:/movie-sentiment-model@champion")
+CHALLENGER_MODEL_URI = os.getenv("CHALLENGER_MODEL_URI", "models:/movie-sentiment-model@challenger")

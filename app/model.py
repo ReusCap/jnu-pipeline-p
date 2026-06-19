@@ -1,5 +1,6 @@
 # app/model.py
 from app.model_loader import load_model
+from app.model_loader import load_model, select_serving_model
 
 POSITIVE_WORDS = (
     "좋", "최고", "재밌", "감동", "추천",
@@ -86,3 +87,19 @@ def predict_sentiment_ml(text: str):
     classes = list(model.classes_)
     score = float(proba[classes.index(pred)])
     return {"label": pred, "confidence": round(score, 2)}
+
+def predict_sentiment_ml_canary(text: str):
+    text = text.strip()
+    if not text:
+        return {"label": "중립", "confidence": 0.0, "serving_model": "none"}
+
+    model, serving_model = select_serving_model()
+    pred = model.predict([text])[0]
+    proba = model.predict_proba([text])[0]
+    classes = list(model.classes_)
+    score = float(proba[classes.index(pred)])
+    return {
+        "label": pred,
+        "confidence": round(score, 2),
+        "serving_model": serving_model,
+    }

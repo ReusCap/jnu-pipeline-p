@@ -10,6 +10,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score
+from mlflow.tracking import MlflowClient
 
 from app.config import (
     MLFLOW_TRACKING_URI,
@@ -19,6 +20,7 @@ from app.config import (
     ARTIFACT_DIR_NAME,
     DATA_DIR_NAME,
 )
+from ml.model_promoter import promote_if_better
 
 BASE_DIR = os.path.dirname(__file__)
 TRAIN_DATA_PATH = os.path.join(BASE_DIR, DATA_DIR_NAME, TRAIN_FILE_NAME)
@@ -43,9 +45,12 @@ models = {
     "DecisionTree": DecisionTreeClassifier(random_state=42),
 }
 
+client = MlflowClient()
+best_test_acc = -1.0
+best_version = None
+
 for model_name, model in models.items():
     with mlflow.start_run(run_name=model_name):
-        # 모델 정보 조회(get_model_info)에서 읽는 키. 하드코딩이 아니라 루프 변수로 기록
         mlflow.log_param("model_type", model_name)
         mlflow.log_param("vectorizer", "CountVectorizer")
         mlflow.log_param("train_row_count", len(train_df))
@@ -69,3 +74,14 @@ for model_name, model in models.items():
         )
 
         print(f"[{model_name}] train_acc={train_acc:.4f} test_acc={test_acc:.4f}")
+
+        # 방금 등록된 최신 버전 추적
+        latest_versions = client.search_model_versions("name='movie-sentiment-model'")
+        latest_version = max(latest_versions, key=lambda v: int(v.version)).version
+        if test_acc > best_test_acc:
+            best_test_acc = test_acc
+            best_version = latest_version
+
+# 이번 학습의 best가 기존 champion보다 좋으면 자동 승격
+if best_version is not None:
+    promote_if_better(best_version, best_test_acc)
