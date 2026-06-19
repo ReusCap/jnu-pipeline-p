@@ -22,3 +22,7 @@ DATA_DIR_NAME = "data"
 
 # (폴백용) 로컬 모델 경로 — ml/artifacts/sentiment_model.joblib
 LOCAL_MODEL_PATH = os.path.join("ml", ARTIFACT_DIR_NAME, MODEL_NAME)
+
+# --- drift / 재학습 이슈 임계값 ---
+LOW_CONFIDENCE_THRESHOLD = float(os.getenv("LOW_CONFIDENCE_THRESHOLD", "0.65"))
+LOW_CONFIDENCE_LIMIT = int(os.getenv("LOW_CONFIDENCE_LIMIT", "5"))
