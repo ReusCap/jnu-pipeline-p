@@ -16,7 +16,7 @@ from app.config import MODEL_MODE
 from app.model_loader import get_model_info
 from app.retrain_issue import update_issue_state
 from app.config import MODEL_MODE, LOW_CONFIDENCE_THRESHOLD
-
+from app.model import predict_sentiment, predict_sentiment_ml, predict_sentiment_ml_canary
 
 # 1) 로그 포맷: 시간 | 레벨 | 파일:라인(함수) | 메시지
 logging.basicConfig(
@@ -53,11 +53,11 @@ async def predict(request: ReviewRequest):
             raise RuntimeError("의도적 장애 추가")
 
         if MODEL_MODE == "ml":
-            result = predict_sentiment_ml(text)
+            result = predict_sentiment_ml_canary(text)
             update_issue_state(
                 text, result["label"], result["confidence"], LOW_CONFIDENCE_THRESHOLD
             )
-            result["model_info"] = get_model_info()
+            result["model_info"] = get_model_info(result["serving_model"])
         else:
             result = predict_sentiment(text)
 
