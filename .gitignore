@@ -42,3 +42,5 @@ mlartifacts/
 
 # 런타임 로그 (예측/피드백 CSV)
 logs/
+
+google_key.json
