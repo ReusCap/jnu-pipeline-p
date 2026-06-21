@@ -1,5 +1,8 @@
 # app/main.py
 # uvicorn app.main:app --reload
+from dotenv import load_dotenv
+load_dotenv()
+
 import logging
 import traceback
 
@@ -13,8 +16,7 @@ from app.issue import create_github_issue
 from app.config import MODEL_MODE, LOW_CONFIDENCE_THRESHOLD
 from app.model_loader import get_model_info
 from app.retrain_issue import update_issue_state
-from app.prediction_logger import save_prediction_log
-from app.feedback import save_feedback
+from app.google_sheet_logger import append_prediction_log, append_feedback_log
 
 logging.basicConfig(
     level=logging.INFO,
@@ -60,9 +62,12 @@ async def predict(request: ReviewRequest):
                 text, result["label"], result["confidence"], LOW_CONFIDENCE_THRESHOLD
             )
             result["model_info"] = get_model_info(result["serving_model"])
-            save_prediction_log(
-                text, result["label"], result["confidence"], result["serving_model"]
-            )
+            try:
+                append_prediction_log(
+                    text, result["label"], result["confidence"], result["serving_model"]
+                )
+            except Exception:
+                logger.exception("prediction log append failed")
         else:
             result = predict_sentiment(text)
 
@@ -98,7 +103,7 @@ async def feedback(payload: FeedbackRequest):
         f"CALL /feedback | prediction={payload.prediction} correct={payload.correct_label}"
     )
     try:
-        save_feedback(
+        append_feedback_log(
             payload.text,
             payload.prediction,
             payload.correct_label,
