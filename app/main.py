@@ -1,5 +1,8 @@
 # app/main.py
 # uvicorn app.main:app --reload
+from dotenv import load_dotenv
+load_dotenv()
+
 import logging
 import traceback
 
@@ -8,17 +11,13 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-from app.model import predict_sentiment
+from app.model import predict_sentiment, predict_sentiment_ml, predict_sentiment_ml_canary
 from app.issue import create_github_issue
-
-from app.model import predict_sentiment, predict_sentiment_ml
-from app.config import MODEL_MODE
+from app.config import MODEL_MODE, LOW_CONFIDENCE_THRESHOLD
 from app.model_loader import get_model_info
 from app.retrain_issue import update_issue_state
-from app.config import MODEL_MODE, LOW_CONFIDENCE_THRESHOLD
-from app.model import predict_sentiment, predict_sentiment_ml, predict_sentiment_ml_canary
+from app.google_sheet_logger import append_prediction_log, append_feedback_log
 
-# 1) 로그 포맷: 시간 | 레벨 | 파일:라인(함수) | 메시지
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | "
@@ -35,6 +34,14 @@ class ReviewRequest(BaseModel):
     text: str
 
 
+class FeedbackRequest(BaseModel):
+    text: str
+    prediction: str
+    correct_label: str
+    confidence: float = 0.0
+    serving_model: str = "unknown"
+
+
 @app.get("/")
 async def serve_index():
     return FileResponse("static/index.html")
@@ -43,12 +50,9 @@ async def serve_index():
 @app.post("/predict")
 async def predict(request: ReviewRequest):
     text = request.text
-
-    # (A) 요청 자체를 기록: 언제 / 무엇(endpoint) / 어떤 입력
     logger.info(f"CALL /predict | text='{text}' | len={len(text)}")
 
     try:
-        # 테스트용 의도적 장애 ('crash' 입력 시 에러)
         if text == "crash":
             raise RuntimeError("의도적 장애 추가")
 
@@ -58,23 +62,24 @@ async def predict(request: ReviewRequest):
                 text, result["label"], result["confidence"], LOW_CONFIDENCE_THRESHOLD
             )
             result["model_info"] = get_model_info(result["serving_model"])
+            try:
+                append_prediction_log(
+                    text, result["label"], result["confidence"], result["serving_model"]
+                )
+            except Exception:
+                logger.exception("prediction log append failed")
         else:
             result = predict_sentiment(text)
 
-        # (B) 정상 결과도 짧게 기록
         logger.info(
-            f"OK /predict | label={result['label']} "
-            f"confidence={result['confidence']}"
+            f"OK /predict | label={result['label']} confidence={result['confidence']}"
         )
         return result
 
     except Exception as e:
-        # (C) 디버깅 핵심: 에러 종류/메시지 + 스택트레이스 자동 기록
         logger.exception(
             f"FAIL /predict | text='{text}' | error={type(e).__name__}: {e}"
         )
-
-        # (D) GitHub Issue 자동 생성
         tb = traceback.format_exc()
         title = f"[Prod Error] /predict failed: {type(e).__name__}"
         body = (
@@ -89,6 +94,24 @@ async def predict(request: ReviewRequest):
             f"```text\n{tb}\n```"
         )
         create_github_issue(title, body, logger)
-
-        # (E) 사용자 응답은 심플하게 (프론트가 confidence를 읽음)
         return {"label": "서버 오류", "confidence": -1}
+
+
+@app.post("/feedback")
+async def feedback(payload: FeedbackRequest):
+    logger.info(
+        f"CALL /feedback | prediction={payload.prediction} correct={payload.correct_label}"
+    )
+    try:
+        append_feedback_log(
+            payload.text,
+            payload.prediction,
+            payload.correct_label,
+            payload.confidence,
+            payload.serving_model,
+        )
+        logger.info("OK /feedback | feedback saved")
+        return {"status": "feedback saved"}
+    except Exception as e:
+        logger.exception(f"FAIL /feedback | error={type(e).__name__}: {e}")
+        return {"status": "feedback save failed"}

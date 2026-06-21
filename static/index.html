@@ -30,9 +30,26 @@
         </button>
 
         <div id="resultBox" class="mt-4 hidden p-4 rounded-xl text-[15px]"></div>
+
+        <div id="feedbackBox" class="mt-4 hidden">
+            <p class="text-[13px] text-[#8B95A1] mb-2">예측이 틀렸나요? 올바른 감정을 알려주세요.</p>
+            <div class="flex gap-2">
+                <button onclick="sendFeedback('긍정')"
+                        class="flex-1 bg-[#E8F3FF] text-[#1B64DA] font-medium text-[14px] py-2.5 rounded-lg hover:bg-[#D8EAFF] transition-colors">
+                    정답: 긍정
+                </button>
+                <button onclick="sendFeedback('부정')"
+                        class="flex-1 bg-[#FFF0F0] text-[#E5484D] font-medium text-[14px] py-2.5 rounded-lg hover:bg-[#FFE0E0] transition-colors">
+                    정답: 부정
+                </button>
+            </div>
+            <div id="feedbackResult" class="mt-2 text-[13px] text-[#8B95A1]"></div>
+        </div>
     </div>
 
     <script>
+        let lastResult = null;
+
         async function analyzeReview() {
             const text = document.getElementById('reviewText').value;
             if (!text.trim()) {
@@ -78,9 +95,44 @@
                 }
 
                 resultBox.innerHTML = html;
+
+                // 피드백용 마지막 결과 저장 + 버튼 노출
+                lastResult = {
+                    text: text,
+                    prediction: data.label,
+                    confidence: data.confidence,
+                    serving_model: data.serving_model ?? 'unknown'
+                };
+                document.getElementById('feedbackResult').innerText = '';
+                document.getElementById('feedbackBox').classList.remove('hidden');
+
             } catch (error) {
                 console.error("Error:", error);
                 alert("서버 통신 중 오류가 발생했습니다.");
+            }
+        }
+
+        async function sendFeedback(correctLabel) {
+            if (!lastResult) {
+                document.getElementById('feedbackResult').innerText = '먼저 리뷰를 분석해주세요.';
+                return;
+            }
+            try {
+                const res = await fetch('/feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: lastResult.text,
+                        prediction: lastResult.prediction,
+                        correct_label: correctLabel,
+                        confidence: lastResult.confidence,
+                        serving_model: lastResult.serving_model
+                    })
+                });
+                await res.json();
+                document.getElementById('feedbackResult').innerText = '피드백 저장 완료: ' + correctLabel;
+            } catch (error) {
+                document.getElementById('feedbackResult').innerText = '피드백 저장 실패';
             }
         }
     </script>
