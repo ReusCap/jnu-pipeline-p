@@ -69,6 +69,7 @@ for model_name, model in models.items():
             )),
             ("classifier", model),
         ])
+        pipeline.fit(X_train, y_train)          
 
         train_acc = accuracy_score(y_train, pipeline.predict(X_train))
         test_acc = accuracy_score(y_test, pipeline.predict(X_test))
