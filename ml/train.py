@@ -63,7 +63,10 @@ for model_name, model in models.items():
         mlflow.log_param("test_row_count", len(test_df))
 
         pipeline = Pipeline([
-            ("vectorizer", CountVectorizer(analyzer="char_wb", ngram_range=(2, 4))),
+            ("vectorizer", CountVectorizer(
+                analyzer="char_wb", ngram_range=(2, 4),
+                min_df=2, max_features=50000,
+            )),
             ("classifier", model),
         ])
 
