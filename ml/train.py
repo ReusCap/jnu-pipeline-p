@@ -36,11 +36,17 @@ mlflow.set_experiment("movie-sentiment-server")
 
 train_df = pd.read_csv(TRAIN_DATA_PATH)
 test_df = pd.read_csv(TEST_DATA_PATH)
+
+# 데이터 위생: 이상 라벨(중복 헤더 등) / 결측치 제거
+VALID_LABELS = ["긍정", "부정"]
+train_df = train_df[train_df["label"].isin(VALID_LABELS)].dropna(subset=["text", "label"])
+test_df = test_df[test_df["label"].isin(VALID_LABELS)].dropna(subset=["text", "label"])
+
 X_train, y_train = train_df["text"], train_df["label"]
 X_test, y_test = test_df["text"], test_df["label"]
 
 models = {
-    "LogisticRegression": LogisticRegression(max_iter=200),
+    "LogisticRegression": LogisticRegression(max_iter=1000),
     "NaiveBayes": MultinomialNB(),
     "DecisionTree": DecisionTreeClassifier(random_state=42),
 }
@@ -57,10 +63,9 @@ for model_name, model in models.items():
         mlflow.log_param("test_row_count", len(test_df))
 
         pipeline = Pipeline([
-            ("vectorizer", CountVectorizer()),
+            ("vectorizer", CountVectorizer(analyzer="char_wb", ngram_range=(2, 4))),
             ("classifier", model),
         ])
-        pipeline.fit(X_train, y_train)
 
         train_acc = accuracy_score(y_train, pipeline.predict(X_train))
         test_acc = accuracy_score(y_test, pipeline.predict(X_test))
